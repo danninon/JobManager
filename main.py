@@ -2,8 +2,6 @@ import hashlib
 import json
 import random
 import sys
-from operator import itemgetter
-
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver import Keys
@@ -11,7 +9,6 @@ from selenium.webdriver.common.by import By
 import time
 import re
 from selenium.webdriver.support import expected_conditions as EC
-
 from selenium.webdriver.support.wait import WebDriverWait
 
 
@@ -47,16 +44,8 @@ def filterJobsByTime(driver):
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, 'jobs-search-results-list'))
         )
-
     except Exception as e:
         print(f"An error occurred: {e}")
-
-# Usage example
-# filterJobsByTime(driver)
-
-
-# Usage example
-# filterTimeByWeb(driver)
 
 
 def filterJobsByExperience(driver):
@@ -90,13 +79,6 @@ def filterJobsByExperience(driver):
 
     except Exception as e:
         print(f"An error occurred: {e}")
-
-# Usage example
-# filterJobsByExperience(driver)
-
-
-# Usage example
-# filterExperienceByWeb(driver)
 
 
 # Initialize the browser
@@ -290,68 +272,43 @@ def readPage(driver, jobInformationHref):
         scrollDownUntilBottom(driver, element_class='jobs-search-results-list', offset=1000,
                               scroll_speed=random.uniform(0.3, 0.8))
 
-        # job_title_elements = try_find_element(by=By.CLASS_NAME,
-        #                                       value='ember-view.jobs-search-results__list-item.occludable-update.p0'
-        #                                       '.relative.scaffold-layout__list-item', element=driver)
-        # time.sleep(2)
         jobTitleElements = WebDriverWait(driver, 10).until(
             EC.presence_of_all_elements_located(
                 (By.CLASS_NAME, 'ember-view.jobs-search-results__list-item.occludable-update.p0'
                                 '.relative.scaffold-layout__list-item'))
         )
-        # job_title_elements = driver.find_elements(By.CLASS_NAME,
-        #                                           'ember-view.jobs-search-results__list-item.occludable-update.p0'
-        #                                           '.relative.scaffold-layout__list-item')
-        # time.sleep(2)
+
         for jobTitleElement in jobTitleElements:
             # Find the nested anchor element within the job title element
             anchorElement = WebDriverWait(jobTitleElement, 10).until(
                 EC.presence_of_element_located((By.TAG_NAME, 'a'))
             )
-            # anchor_element = job_title_element.find_element(By.TAG_NAME, 'a')
-
-            # anchor_element = job_title_element.find_element(By.TAG_NAME, 'a')
 
             jobHref = anchorElement.get_attribute('href')
 
             # Additional processing to handle specific structure
             if jobHref:
                 jobInformationHref.append(jobHref)
-        # Print the collected information
-        # for job_info in jobInformation:
-        #     print(f"Job Title: {job_info['text']}")
-        #     print(f"Job Href: {job_info['href']}")
-        #     print()
     except Exception as e:
         print(f"An error occurred: {e}")
 
 
+# todo: username and password should be in a file and not in the code itself
 def login(driver):
+    try:
+        username = "danninon@gmail.com"
+        password = "buvskhv109"
+        username_input = driver.find_element(By.ID, 'session_key')
+        password_input = driver.find_element(By.ID, 'session_password')
+        # Enter the username and password
+        username_input.send_keys(username)
+        password_input.send_keys(password)
+        # Find and click the sign-in button
+        sign_in_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Sign in')]")
+        sign_in_button.click()
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
-    username_input = driver.find_element(By.ID, 'session_key')
-    password_input = driver.find_element(By.ID, 'session_password')
-    # Enter the username and password
-    username_input.send_keys(username)
-    password_input.send_keys(password)
-    # Find and click the sign-in button
-    sign_in_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Sign in')]")
-    sign_in_button.click()
-
-
-# sometimes not filtering the name
-# def setJobTitleLookout(driver, searchQuery):
-#     try:
-#         text_box_element = WebDriverWait(driver, 10).until(
-#             EC.presence_of_element_located((By.CLASS_NAME, 'jobs-search-box__text-input'))
-#         )
-#         # text_box_element = try_find_element(by=By.CLASS_NAME, value='jobs-search-box__text-input', element=driver)
-#         text_box_element.clear()
-#         text_box_element.send_keys(searchQuery)  # make different searches later, but start with this one
-#         time.sleep(2)
-#         text_box_element.send_keys(Keys.ENTER)
-#         time.sleep(2)
-#     except Exception as e:
-#         print(f"An error occurred: {e}")
 
 def setJobTitleLookout(driver, searchQuery):
     try:
@@ -376,53 +333,9 @@ def setJobTitleLookout(driver, searchQuery):
     except Exception as e:
         print(f"An error occurred: {e}")
 
+
 # Usage example
 # setJobTitleLookout(driver, 'software engineer')
-
-
-def try_find_element(by, value, element, max_wait=10, poll_frequency=1):
-    try:
-        # First attemp of waiting for the element to be present
-        time.sleep(1)
-        if waitForElementDriver(by, max_wait, value):
-            return element.find_element(by, value)
-        # Second attempt of waiting for the element to be found
-
-        if waitForElementLoop(by=by, value=value, element=element, max_wait=max_wait, poll_frequency=poll_frequency):
-            return element.find_element(by, value)
-    except Exception as e:
-        time.sleep(2)
-        return element.find_element(by, value)
-
-
-def waitForElementDriver(by, max_wait, value):
-    try:
-        selector = (by, value)
-        WebDriverWait(by, max_wait).until(
-            EC.presence_of_element_located(selector)
-        )
-        return True
-    except Exception as e:
-        return False
-
-
-def waitForElementLoop(max_wait, poll_frequency, by, value, element):
-    try:
-        end_time = time.time() + max_wait
-        while time.time() < end_time:
-            try:
-                element.find_element(by, value)
-                print(f"Element found: {by}='{value}'")
-                return True
-            except NoSuchElementException:
-                print(f"Element not found, retrying in {poll_frequency} seconds...")
-                time.sleep(poll_frequency)
-        print(f"Element not found within the specified timeout ({max_wait} seconds).")
-        return False
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return False
-
 
 def goToPage(driver, PageNumber):
     try:
@@ -464,14 +377,6 @@ def ExtractHrefsData(driver, jobInformationHref, searchQueries, pagesToRead):
         print(f"An error occurred: {e}")
 
 
-# def ExtractJobsFromHref(driver, jobInformationHref, jobInformation):
-#     for href in jobInformationHref:
-#         # driver.get(href)
-#         jobDetails = extractJobDetails(href, driver)
-#         # Check if the job_details is not already in the list before adding it
-#         if jobDetails not in jobInformation:
-#             jobInformation.append(jobDetails)
-
 def ExtractJobsFromHref(driver, jobInformationHref, jobInformation):
     try:
         # Load existing jobs from the file
@@ -490,6 +395,10 @@ def ExtractJobsFromHref(driver, jobInformationHref, jobInformation):
         print(f"An unexpected error occurred: {e}")
 
 
+counter = 1
+
+
+# Sort the jobs using the custom key function
 def sort_key(job):
     try:
         global counter
@@ -509,11 +418,6 @@ def sort_key(job):
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         return None
-
-
-# Sort the jobs using the custom key function
-
-counter = 1
 
 
 def Main():
@@ -556,10 +460,6 @@ def Main():
 
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
-
-    except NoSuchElementException as e:
-        print(f"Error: {e}")
-        print("The <html> element was not found. Make sure the page is loaded correctly.")
 
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
